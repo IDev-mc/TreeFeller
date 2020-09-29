@@ -38,11 +38,11 @@ public class TreeMain extends JavaPlugin implements Listener{
 	 */
 	private void cutter(Location blocklocation, Player player) {
 		for(Location woodlocation : checker(blocklocation)) {
-			woodlocation.getBlock().breakNaturally();
 			
 			Bukkit.getScheduler().runTaskLater(this, new Runnable() {
 				@Override
 				public void run() {
+					woodlocation.getBlock().breakNaturally();
 					cutter(woodlocation, player);
 				}
 			}, 1L);

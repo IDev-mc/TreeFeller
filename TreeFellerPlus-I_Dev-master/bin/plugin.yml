@@ -1,9 +1,8 @@
 main: TFP.TreeMain
 api-version: 1.16
 
-name: TreeFellerPlus
-version: 1.0
+name: TreeFeller
+version: 1.2
 author: I_Dev
 
 load: POSTWORLD
-loadbefore: [WorldGuard]
