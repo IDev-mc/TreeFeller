@@ -27,7 +27,11 @@ public class TreeMain extends JavaPlugin implements Listener{
 	public void a(BlockBreakEvent e) {
 		if(e.isCancelled()) return;
 		if(e.getPlayer().getGameMode() != GameMode.SURVIVAL) return;
-		if(!e.getBlock().getType().toString().contains("LOG")) return;
+		String type = e.getBlock().getType().toString();
+		if(!type.contains("LOG")
+				&& !type.contains("WOOD")
+				&& !type.contains("STEM")
+				&& !type.contains("HYPHAE")) return;
 		
 		cutter(e.getBlock().getLocation(), e.getPlayer());
 	}
@@ -58,7 +62,11 @@ public class TreeMain extends JavaPlugin implements Listener{
 		for(int x = -1; x <= 1; x = x + 1) {
 			for(int y = 0; y <= 1; y = y + 1) {
 				for(int z = -1; z <= 1; z = z + 1) {
-					if(loc.clone().add(x, y, z).getBlock().getType().toString().contains("LOG")) {
+					String type = loc.clone().add(x, y, z).getBlock().getType().toString();
+					if(type.contains("LOG")
+							|| type.contains("WOOD")
+							|| type.contains("STEM")
+							|| type.contains("HYPHAE")) {
 						locs.add(loc.clone().add(x, y, z));
 					}
 				}
