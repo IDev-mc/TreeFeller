@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
+import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -27,11 +28,7 @@ public class TreeMain extends JavaPlugin implements Listener{
 	public void a(BlockBreakEvent e) {
 		if(e.isCancelled()) return;
 		if(e.getPlayer().getGameMode() != GameMode.SURVIVAL) return;
-		String type = e.getBlock().getType().toString();
-		if(!type.contains("LOG")
-				&& !type.contains("WOOD")
-				&& !type.contains("STEM")
-				&& !type.contains("HYPHAE")) return;
+		if(!this.isBlockCuttable(e.getBlock())) return;
 		
 		cutter(e.getBlock().getLocation(), e.getPlayer());
 	}
@@ -62,11 +59,7 @@ public class TreeMain extends JavaPlugin implements Listener{
 		for(int x = -1; x <= 1; x = x + 1) {
 			for(int y = 0; y <= 1; y = y + 1) {
 				for(int z = -1; z <= 1; z = z + 1) {
-					String type = loc.clone().add(x, y, z).getBlock().getType().toString();
-					if(type.contains("LOG")
-							|| type.contains("WOOD")
-							|| type.contains("STEM")
-							|| type.contains("HYPHAE")) {
+					if(this.isBlockCuttable(loc.clone().add(x, y, z).getBlock())) {
 						locs.add(loc.clone().add(x, y, z));
 					}
 				}
@@ -75,4 +68,10 @@ public class TreeMain extends JavaPlugin implements Listener{
 		return locs;
 	}
 
+	/*
+	 * Check if block is allowed to be cut by cutter
+	 */
+	private boolean isBlockCuttable(Block block) {
+		return block.getType().toSTring().matches("(LOG)|(WOOD)|(STEM)|(HYPHAE)");
+	}
 }
