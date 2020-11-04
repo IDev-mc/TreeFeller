@@ -19,7 +19,8 @@ public class Main extends JavaPlugin implements Listener {
 	public List<String> treematerials = new ArrayList<>();
 	public int maxTreeSize = 0;
 	public int maxTreeHeight = 0;
-
+	public boolean toolDamage = false;
+	
 	@Override
 	public void onEnable() {
 		super.onEnable();
@@ -34,16 +35,17 @@ public class Main extends JavaPlugin implements Listener {
 		saveConfig();
 		maxTreeSize = getConfig().getInt("maxTreeSize");
 		maxTreeHeight = getConfig().getInt("maxTreeHeight");
+		toolDamage = getConfig().getBoolean("toolDamage");
 	}
 
-	@EventHandler(priority = EventPriority.LOWEST)
+	@EventHandler(priority = EventPriority.HIGHEST)
 	public void blockMine(BlockBreakEvent e) {
 		if (e.isCancelled()) return;
 		if (e.getPlayer().getGameMode() != GameMode.SURVIVAL) return;
 		if (!isMaterial(e.getBlock().getType())) return;
 		if (!isTree(e.getBlock().getLocation())) return;
 
-		breakTree(e.getBlock());
+		breakTree(e.getBlock()); 
 	}
 
 	private void breakTree(Block block) {
@@ -57,6 +59,8 @@ public class Main extends JavaPlugin implements Listener {
 		if (blocks.size() >= maxTreeSize) return;
 
 		for (Block b : blocks) {
+			if(toolDamage && b == block) continue;
+			
 			b.breakNaturally();
 		}
 	}
@@ -85,28 +89,34 @@ public class Main extends JavaPlugin implements Listener {
 	}
 
 	private boolean isTree(Location loc) {
-		if (loc == null)
-			return false;
+		if (loc == null) return false;
+		
 		int height = 1;
 		boolean isTree = false;
+		Material material = loc.getBlock().getType();
 		
-		while (loc.add(0, 1, 0).getBlock().getType() != Material.AIR) {
+		while (loc.add(0, 1, 0).getBlock().getType() == material) {
 			height++;
-			if(height >= maxTreeHeight) {
-				return false;
-			}
 			
-			
-			for (int y = 0; y <= 4; y = y + 1) {
-				for (int x = -1; x <= 1; x = x + 1) {
-					for (int z = -1; z <= 1; z = z + 1) {
-						if (loc.clone().add(x, y, z).getBlock().getType().toString().contains("LEAVES")) {
-							isTree = true;
-						}
+			if(height >= maxTreeHeight) return false;
+			if(checkForLeaves(loc)) isTree = true;
+		}
+		return isTree;
+	}
+	
+	private boolean checkForLeaves(Location loc) {
+		for (int y = 0; y <= 4; y = y + 1) {
+			for (int x = -1; x <= 1; x = x + 1) {
+				for (int z = -1; z <= 1; z = z + 1) {
+					Block block = loc.clone().add(x, y, z).getBlock();
+					if (block.getType().toString().contains("LEAVES") ||
+							block.getType().toString().contains("WART_BLOCK")) {
+						return true;
 					}
 				}
 			}
 		}
-		return isTree;
+		
+		return false;
 	}
 }
