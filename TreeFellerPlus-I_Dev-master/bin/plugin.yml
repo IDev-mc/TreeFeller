@@ -1,8 +1,0 @@
-main: TFP.TreeMain
-api-version: 1.16
-
-name: TreeFeller
-version: 1.3
-author: I_Dev
-
-load: POSTWORLD
