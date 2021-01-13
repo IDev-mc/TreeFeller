@@ -1,3 +1,9 @@
 maxTreeSize: 120
 maxTreeHeight: 26
 toolDamage: true
+activateonsneak: false
+treeblocks:
+   - log
+   - wood
+   - stem
+   - hyphae
