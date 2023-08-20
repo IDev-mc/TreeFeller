@@ -9,24 +9,28 @@ import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import de.I_Dev.TF.API.TreeFellerTreeBreakEvent;
+
 public class TreeFeller extends JavaPlugin implements Listener {
 
-	public List<String> treematerials = new ArrayList<>();
-	public int maxTreeSize = 0;
-	public int maxTreeHeight = 0;
-	public boolean toolDamage = false;
-	public boolean onsneak = false;
+	public static List<String> treematerials = new ArrayList<>();
+	public static int maxTreeSize = 0;
+	public static int maxTreeHeight = 0;
+	public static boolean toolDamage = false;
+	public static boolean onsneak = false;
 	
 	@SuppressWarnings("unchecked")
 	@Override
 	public void onEnable() {
 		super.onEnable();
+		
 		Bukkit.getPluginManager().registerEvents(this, this);
 
 		getConfig().options().copyDefaults(true);
@@ -38,32 +42,38 @@ public class TreeFeller extends JavaPlugin implements Listener {
 		treematerials.addAll((Collection<? extends String>) getConfig().getList("treeblocks"));
 	}
 
+	@SuppressWarnings("deprecation")
 	@EventHandler(priority = EventPriority.HIGHEST)
-	public void blockMine(BlockBreakEvent e) {
+	public void blockBreak(BlockBreakEvent e) {
 		if (e.isCancelled()) return;
-		if(onsneak && !e.getPlayer().isSneaking()) return;
-		if (e.getPlayer().getGameMode() != GameMode.SURVIVAL) return;
+		Player p = e.getPlayer();
+		if(onsneak && !p.isSneaking()) return;
+		if (p.getGameMode() != GameMode.SURVIVAL) return;
 		if (!isMaterial(e.getBlock().getType())) return;
 		if (!isTree(e.getBlock().getLocation())) return;
-
-		breakTree(e.getBlock()); 
+		
+		List<Block> blocks = getTree(e.getBlock());
+		
+		TreeFellerTreeBreakEvent event = new TreeFellerTreeBreakEvent(p, blocks, e.getBlock());
+		Bukkit.getPluginManager().callEvent(event);
+		if(!event.isCancelled()) blocks.forEach(Block::breakNaturally);
+		
+		/*
+		 * DEPRECATED, here to make it a smaller file. Next version has to have multiple files, for lower and higher versions
+		 */
+		
+		if(toolDamage) 
+			p.getInventory().getItemInHand().setDurability((short) (p.getInventory().getItemInHand().getDurability()+1));
 	}
 
-	private void breakTree(Block block) {
+	private List<Block> getTree(Block block) {
 		List<Block> blocks = new ArrayList<>();
 		blocks.add(block);
-
 		for (int i = 0; i < blocks.size(); i++) {
 			getBlocksAroundALocation(blocks.get(i).getLocation(), blocks);
 		}
-
-		if (blocks.size() >= maxTreeSize) return;
-
-		for (Block b : blocks) {
-			if(toolDamage && b == block) continue;
-			
-			b.breakNaturally();
-		}
+		if (blocks.size() >= maxTreeSize) return new ArrayList<>();
+		return blocks;
 	}
 
 	private List<Block> getBlocksAroundALocation(Location loc, List<Block> nonLoop) {
@@ -95,12 +105,13 @@ public class TreeFeller extends JavaPlugin implements Listener {
 		int height = 1;
 		boolean isTree = false;
 		Material material = loc.getBlock().getType();
-		
 		while (loc.add(0, 1, 0).getBlock().getType() == material) {
 			height++;
-			
 			if(height >= maxTreeHeight) return false;
-			if(checkForLeaves(loc)) isTree = true;
+			if(checkForLeaves(loc)) {
+				isTree = true;
+				break;
+			}
 		}
 		return isTree;
 	}
@@ -117,7 +128,6 @@ public class TreeFeller extends JavaPlugin implements Listener {
 				}
 			}
 		}
-		
 		return false;
 	}
 }

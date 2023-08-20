@@ -1,0 +1,7 @@
+main: de.I_Dev.TF.TreeFeller
+api-version: 1.20
+
+name: TreeFeller
+version: 2.0
+author: I_Dev
+description: A simple timber plugin
