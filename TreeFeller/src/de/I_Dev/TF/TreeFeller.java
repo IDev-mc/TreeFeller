@@ -14,6 +14,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.player.PlayerItemDamageEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import de.I_Dev.TF.API.TreeFellerTreeBreakEvent;
@@ -25,12 +26,12 @@ public class TreeFeller extends JavaPlugin implements Listener {
 	public static int maxTreeHeight = 0;
 	public static boolean toolDamage = false;
 	public static boolean onsneak = false;
-	
+
 	@SuppressWarnings("unchecked")
 	@Override
 	public void onEnable() {
 		super.onEnable();
-		
+
 		Bukkit.getPluginManager().registerEvents(this, this);
 
 		getConfig().options().copyDefaults(true);
@@ -45,25 +46,39 @@ public class TreeFeller extends JavaPlugin implements Listener {
 	@SuppressWarnings("deprecation")
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void blockBreak(BlockBreakEvent e) {
-		if (e.isCancelled()) return;
+		if (e.isCancelled())
+			return;
 		Player p = e.getPlayer();
-		if(onsneak && !p.isSneaking()) return;
-		if (p.getGameMode() != GameMode.SURVIVAL) return;
-		if (!isMaterial(e.getBlock().getType())) return;
-		if (!isTree(e.getBlock().getLocation())) return;
-		
+		if (onsneak && !p.isSneaking())
+			return;
+		if (p.getGameMode() != GameMode.SURVIVAL)
+			return;
+		if (!isMaterial(e.getBlock().getType()))
+			return;
+		if (!isTree(e.getBlock().getLocation()))
+			return;
+
 		List<Block> blocks = getTree(e.getBlock());
-		
+
 		TreeFellerTreeBreakEvent event = new TreeFellerTreeBreakEvent(p, blocks, e.getBlock());
 		Bukkit.getPluginManager().callEvent(event);
-		if(!event.isCancelled()) blocks.forEach(Block::breakNaturally);
-		
+		if (!event.isCancelled())
+			blocks.forEach(Block::breakNaturally);
+
 		/*
-		 * DEPRECATED, here to make it a smaller file. Next version has to have multiple files, for lower and higher versions
+		 * DEPRECATED, here to make it a smaller file. Next version has to have multiple
+		 * files, for lower and higher versions
 		 */
-		
-		if(toolDamage) 
-			p.getInventory().getItemInHand().setDurability((short) (p.getInventory().getItemInHand().getDurability()+1));
+
+		if (!toolDamage)
+			return;
+
+		PlayerItemDamageEvent damageEvent = new PlayerItemDamageEvent(p, p.getInventory().getItemInHand(), 1);
+		Bukkit.getPluginManager().callEvent(damageEvent);
+		if (damageEvent.isCancelled())
+			return;
+		p.getInventory().getItemInHand()
+				.setDurability((short) (p.getInventory().getItemInHand().getDurability() + damageEvent.getDamage()));
 	}
 
 	private List<Block> getTree(Block block) {
@@ -72,7 +87,8 @@ public class TreeFeller extends JavaPlugin implements Listener {
 		for (int i = 0; i < blocks.size(); i++) {
 			getBlocksAroundALocation(blocks.get(i).getLocation(), blocks);
 		}
-		if (blocks.size() >= maxTreeSize) return new ArrayList<>();
+		if (blocks.size() >= maxTreeSize)
+			return new ArrayList<>();
 		return blocks;
 	}
 
@@ -93,36 +109,39 @@ public class TreeFeller extends JavaPlugin implements Listener {
 	}
 
 	private boolean isMaterial(Material material) {
-		for(String materials : treematerials) {
-			if(material.toString().toLowerCase().contains(materials.toLowerCase())) return true;
+		for (String materials : treematerials) {
+			if (material.toString().toLowerCase().contains(materials.toLowerCase()))
+				return true;
 		}
 		return false;
 	}
 
 	private boolean isTree(Location loc) {
-		if (loc == null) return false;
-		
+		if (loc == null)
+			return false;
+
 		int height = 1;
 		boolean isTree = false;
 		Material material = loc.getBlock().getType();
 		while (loc.add(0, 1, 0).getBlock().getType() == material) {
 			height++;
-			if(height >= maxTreeHeight) return false;
-			if(checkForLeaves(loc)) {
+			if (height >= maxTreeHeight)
+				return false;
+			if (checkForLeaves(loc)) {
 				isTree = true;
 				break;
 			}
 		}
 		return isTree;
 	}
-	
+
 	private boolean checkForLeaves(Location loc) {
 		for (int y = 0; y <= 4; y = y + 1) {
 			for (int x = -1; x <= 1; x = x + 1) {
 				for (int z = -1; z <= 1; z = z + 1) {
 					Block block = loc.clone().add(x, y, z).getBlock();
-					if (block.getType().toString().contains("LEAVES") ||
-							block.getType().toString().contains("WART_BLOCK")) {
+					if (block.getType().toString().contains("LEAVES")
+							|| block.getType().toString().contains("WART_BLOCK")) {
 						return true;
 					}
 				}
